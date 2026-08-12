@@ -91,22 +91,28 @@ export default function NewAppointmentPage() {
           </p>
         </div>
 
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-left text-xs space-y-3">
-          <div className="flex justify-between pb-2 border-b border-zinc-800">
-            <span className="text-zinc-500">Unidade:</span>
-            <span className="font-semibold text-zinc-200">{selectedBranch.name}</span>
+        {/* Card de Resumo com espaçamento ajustado */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-left text-xs space-y-3.5">
+          <div className="flex justify-between items-center gap-4 pb-3 border-b border-zinc-800">
+            <span className="text-zinc-500 shrink-0">Unidade:</span>
+            <span className="font-semibold text-zinc-200 text-right">{selectedBranch.name}</span>
           </div>
-          <div className="flex justify-between pb-2 border-b border-zinc-800">
-            <span className="text-zinc-500">Barbeiro:</span>
-            <span className="font-semibold text-zinc-200">{selectedBarber.name}</span>
+
+          <div className="flex justify-between items-center gap-4 pb-3 border-b border-zinc-800">
+            <span className="text-zinc-500 shrink-0">Barbeiro:</span>
+            <span className="font-semibold text-zinc-200 text-right">{selectedBarber.name}</span>
           </div>
-          <div className="flex justify-between pb-2 border-b border-zinc-800">
-            <span className="text-zinc-500">Serviços:</span>
-            <span className="font-semibold text-zinc-200">{selectedServices.map(s => s.name).join(", ")}</span>
+
+          <div className="flex justify-between items-start gap-4 pb-3 border-b border-zinc-800">
+            <span className="text-zinc-500 shrink-0">Serviços:</span>
+            <span className="font-semibold text-zinc-200 text-right leading-relaxed">
+              {selectedServices.map((s) => s.name).join(", ")}
+            </span>
           </div>
-          <div className="flex justify-between pt-1">
-            <span className="text-zinc-500">Valor Total:</span>
-            <span className="font-bold text-emerald-400 text-sm">
+
+          <div className="flex justify-between items-center gap-4 pt-1">
+            <span className="text-zinc-500 shrink-0">Valor Total:</span>
+            <span className="font-bold text-emerald-400 text-sm text-right">
               {isVipMember ? "R$ 0,00 (Plano VIP)" : `R$ ${finalTotal.toFixed(2).replace(".", ",")}`}
             </span>
           </div>
@@ -160,7 +166,7 @@ export default function NewAppointmentPage() {
               <p className="text-[11px] text-zinc-400">{selectedBranch.address}</p>
             </div>
           </div>
-          <ChevronRight className="w-5 h-5 text-zinc-600" />
+          <ChevronRight className="w-5 h-5 text-zinc-600 shrink-0" />
         </button>
 
         <button
@@ -178,7 +184,7 @@ export default function NewAppointmentPage() {
               <p className="text-[11px] text-zinc-400">{selectedBarber.role}</p>
             </div>
           </div>
-          <ChevronRight className="w-5 h-5 text-zinc-600" />
+          <ChevronRight className="w-5 h-5 text-zinc-600 shrink-0" />
         </button>
 
         <button
@@ -202,7 +208,7 @@ export default function NewAppointmentPage() {
               </p>
             </div>
           </div>
-          <ChevronRight className="w-5 h-5 text-zinc-600" />
+          <ChevronRight className="w-5 h-5 text-zinc-600 shrink-0" />
         </button>
 
         <button
@@ -220,7 +226,7 @@ export default function NewAppointmentPage() {
               <p className="text-[11px] text-emerald-400 font-medium">Horário confirmado</p>
             </div>
           </div>
-          <ChevronRight className="w-5 h-5 text-zinc-600" />
+          <ChevronRight className="w-5 h-5 text-zinc-600 shrink-0" />
         </button>
       </div>
 
