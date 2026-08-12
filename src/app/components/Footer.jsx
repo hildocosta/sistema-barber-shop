@@ -8,8 +8,8 @@ export function Footer() {
   const pathname = usePathname();
   const currentYear = new Date().getFullYear();
 
-  // Oculta o Footer na tela de novo agendamento
-  if (pathname === "/appointments/new") {
+  // Oculta o Footer na tela de novo agendamento e no cadastro rápido
+  if (pathname === "/appointments/new" || pathname === "/register") {
     return null;
   }
 
@@ -64,7 +64,7 @@ export function Footer() {
               <Link href="/plans" className="text-amber-500 hover:text-amber-400 transition-colors font-medium">Clube VIP (Corte Ilimitado)</Link>
             </li>
             <li>
-              <Link href="/login" className="hover:text-amber-400 transition-colors">Área do Cliente</Link>
+              <Link href="/register" className="hover:text-amber-400 transition-colors">Cadastro Rápido</Link>
             </li>
           </ul>
         </div>
