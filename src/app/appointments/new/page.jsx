@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import Link from "next/link";
 import { 
   ArrowLeft, 
@@ -16,16 +15,6 @@ import {
   Crown,
   CheckCircle2
 } from "lucide-react";
-
-// Função utilitária declarada fora do componente para garantir pureza na renderização
-let counter = 0;
-function generateUniqueId(date, time) {
-  counter += 1;
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-  return `apt-${date}-${time.replace(":", "")}-${counter}`;
-}
 
 // DADOS DO SISTEMA
 const BRANCHES = [
@@ -66,10 +55,6 @@ const TIME_SLOTS = [
 ];
 
 export default function NewAppointmentPage() {
-  const router = useRouter();
-  const [, startTransition] = useTransition();
-
-  const [currentUser, setCurrentUser] = useState(null);
   const [selectedBranch, setSelectedBranch] = useState(BRANCHES[0]);
   const [selectedBarber, setSelectedBarber] = useState(BARBERS[0]);
   const [selectedServices, setSelectedServices] = useState([SERVICES[0]]);
@@ -79,27 +64,6 @@ export default function NewAppointmentPage() {
   const [activeSheet, setActiveSheet] = useState(null);
   const [confirmed, setConfirmed] = useState(false);
   const [isVipMember, setIsVipMember] = useState(false);
-
-  useEffect(() => {
-    const rawUser = typeof window !== "undefined" ? localStorage.getItem("barber_user") : null;
-
-    if (!rawUser) {
-      router.push("/register");
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(rawUser);
-      startTransition(() => {
-        setCurrentUser(parsed);
-        if (parsed.isVip) {
-          setIsVipMember(true);
-        }
-      });
-    } catch {
-      router.push("/register");
-    }
-  }, [router]);
 
   const handleToggleService = (service) => {
     if (selectedServices.find((s) => s.id === service.id)) {
@@ -114,41 +78,9 @@ export default function NewAppointmentPage() {
   const rawTotal = selectedServices.reduce((acc, curr) => acc + curr.price, 0);
   const finalTotal = isVipMember ? 0.0 : rawTotal;
 
-  const handleConfirmAppointment = () => {
-    const appointmentId = generateUniqueId(selectedDay.fullDate, selectedTime);
-
-    const newAppointment = {
-      id: appointmentId,
-      clientName: currentUser?.name || "Cliente",
-      clientPhone: currentUser?.phone || "",
-      branch: selectedBranch,
-      barber: selectedBarber,
-      services: selectedServices,
-      day: selectedDay,
-      time: selectedTime,
-      total: finalTotal,
-      isVip: isVipMember,
-      status: "confirmed",
-      createdAt: selectedDay.fullDate
-    };
-
-    try {
-      const existing = JSON.parse(localStorage.getItem("barber_appointments") || "[]");
-      localStorage.setItem("barber_appointments", JSON.stringify([newAppointment, ...existing]));
-    } catch (e) {
-      console.error("Erro ao salvar agendamento:", e);
-    }
-
-    setConfirmed(true);
-  };
-
-  if (!currentUser) {
-    return null;
-  }
-
-  if (confirmed) {
+ if (confirmed) {
     return (
-      <div className="max-w-md mx-auto px-4 py-12 text-center space-y-6">
+      <div className="max-w-md mx-auto px-4 py-16 text-center space-y-6">
         <div className="w-20 h-20 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto animate-bounce">
           <CheckCircle2 className="w-10 h-10" />
         </div>
@@ -156,11 +88,11 @@ export default function NewAppointmentPage() {
         <div className="space-y-2">
           <h1 className="text-2xl font-black text-zinc-100">Agendamento Confirmado!</h1>
           <p className="text-sm text-zinc-400">
-            Reserva para <strong className="text-zinc-200">{currentUser.name}</strong> marcada para <span className="text-amber-400 font-bold">{selectedDay.dateString}</span> às <span className="text-amber-400 font-bold">{selectedTime}</span>.
+            Reserva marcada com sucesso para o dia <span className="text-amber-400 font-bold">{selectedDay.dateString}</span> às <span className="text-amber-400 font-bold">{selectedTime}</span>.
           </p>
         </div>
 
-        {/* Card de Resumo Centralizado */}
+        {/* Card de Resumo Totalmente Centralizado */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-center text-xs space-y-4">
           <div className="pb-3 border-b border-zinc-800/80 space-y-1">
             <span className="text-[11px] uppercase font-bold text-zinc-500 tracking-wider block">Unidade</span>
@@ -299,7 +231,7 @@ export default function NewAppointmentPage() {
         </button>
       </div>
 
-      {/* Resumo e Botão de Confirmação */}
+      {/* Resumo e Botão de Ação Embutido no Fluxo */}
       <div className="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-4 space-y-3 pt-4">
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold text-zinc-400">Total a pagar</span>
@@ -314,19 +246,20 @@ export default function NewAppointmentPage() {
         </div>
 
         <button
-          onClick={handleConfirmAppointment}
+          onClick={() => setConfirmed(true)}
           className="w-full bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black py-3.5 px-6 rounded-xl text-sm transition-all shadow-lg shadow-amber-500/10 active:scale-[0.98] text-center"
         >
           Confirmar Agendamento
         </button>
       </div>
 
-      {/* BOTTOM SHEETS */}
+      {/* MODAL / BOTTOM SHEET RESPONSIVO */}
       {activeSheet && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col justify-end sm:justify-center sm:items-center sm:p-4 transition-opacity">
+          
           <div className="fixed inset-0" onClick={() => setActiveSheet(null)} />
 
-          <div className="relative w-full sm:max-w-lg bg-zinc-900 border border-zinc-800 rounded-t-3xl sm:rounded-3xl p-6 space-y-5 max-h-[85vh] overflow-y-auto z-10 shadow-2xl">
+          <div className="relative w-full sm:max-w-lg bg-zinc-900 border border-zinc-800 rounded-t-3xl sm:rounded-3xl p-6 space-y-5 max-h-[85vh] overflow-y-auto z-10 shadow-2xl animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
               <h3 className="text-base font-bold text-zinc-100">
                 {activeSheet === "branch" && "Selecione a Filial"}
