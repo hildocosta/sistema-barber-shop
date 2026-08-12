@@ -1,3 +1,4 @@
+"use client";
 import { Check, ShieldCheck, Crown } from "lucide-react";
 import Link from "next/link";
 
