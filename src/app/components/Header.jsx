@@ -2,7 +2,7 @@
 
 import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { Scissors, Calendar, Crown, Menu, X, UserPlus, LogOut } from "lucide-react";
+import { Scissors, Calendar, Crown, Menu, X, UserPlus, LogIn, LogOut } from "lucide-react";
 
 // Funções puras para ler e subscrever ao localStorage
 function subscribe(callback) {
@@ -69,7 +69,7 @@ export function Header() {
         </nav>
 
         {/* Desktop Auth / Perfil */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-2.5">
           {currentUser ? (
             <div className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-xl text-sm">
               <div className="flex items-center gap-2">
@@ -90,13 +90,22 @@ export function Header() {
               </button>
             </div>
           ) : (
-            <Link
-              href="/register"
-              className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 hover:border-amber-500/40 text-zinc-200 px-4 py-2 rounded-xl text-sm transition-all"
-            >
-              <UserPlus className="w-4 h-4 text-amber-500" />
-              <span>Cadastro Rápido</span>
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/login"
+                className="flex items-center gap-1.5 text-zinc-300 hover:text-amber-400 px-3 py-2 rounded-xl text-sm transition-colors"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Entrar</span>
+              </Link>
+              <Link
+                href="/register"
+                className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 hover:border-amber-500/40 text-zinc-200 px-3.5 py-2 rounded-xl text-sm transition-all"
+              >
+                <UserPlus className="w-4 h-4 text-amber-500" />
+                <span>Cadastro</span>
+              </Link>
+            </div>
           )}
         </div>
 
@@ -163,8 +172,8 @@ export function Header() {
             <Crown className="w-4 h-4" /> Clube VIP & Planos
           </Link>
 
-          {/* Botão de Cadastro / Sair */}
-          <div className="pt-3 border-t border-zinc-900">
+          {/* Botões de Acesso (Login / Cadastro / Sair) */}
+          <div className="pt-3 border-t border-zinc-900 space-y-2">
             {currentUser ? (
               <button
                 onClick={handleLogout}
@@ -174,13 +183,22 @@ export function Header() {
                 <LogOut className="w-4 h-4" />
               </button>
             ) : (
-              <Link 
-                href="/register" 
-                onClick={() => setIsOpen(false)} 
-                className="flex items-center gap-2 text-sm font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3.5 py-2.5 rounded-xl"
-              >
-                <UserPlus className="w-4 h-4" /> Cadastro Rápido
-              </Link>
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <Link 
+                  href="/login" 
+                  onClick={() => setIsOpen(false)} 
+                  className="flex items-center justify-center gap-2 text-sm font-medium text-zinc-300 bg-zinc-900 border border-zinc-800 py-2.5 rounded-xl hover:text-amber-400 transition-colors"
+                >
+                  <LogIn className="w-4 h-4" /> Entrar
+                </Link>
+                <Link 
+                  href="/register" 
+                  onClick={() => setIsOpen(false)} 
+                  className="flex items-center justify-center gap-2 text-sm font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 py-2.5 rounded-xl hover:bg-amber-500/20 transition-colors"
+                >
+                  <UserPlus className="w-4 h-4" /> Cadastro
+                </Link>
+              </div>
             )}
           </div>
         </div>
