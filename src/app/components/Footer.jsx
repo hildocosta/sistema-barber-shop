@@ -1,8 +1,17 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Scissors, MapPin, Phone, Clock, ShieldCheck } from "lucide-react";
 
 export function Footer() {
+  const pathname = usePathname();
   const currentYear = new Date().getFullYear();
+
+  // Oculta o Footer na tela de novo agendamento
+  if (pathname === "/appointments/new") {
+    return null;
+  }
 
   return (
     <footer className="bg-zinc-950 border-t border-zinc-900 text-zinc-400 text-sm mt-auto">
