@@ -8,8 +8,10 @@ export function Footer() {
   const pathname = usePathname();
   const currentYear = new Date().getFullYear();
 
-  // Oculta o Footer na tela de novo agendamento e no cadastro rápido
-  if (pathname === "/appointments/new" || pathname === "/register") {
+  // Rotas onde o Footer NÃO deve aparecer
+  const hiddenRoutes = ["/appointments/new", "/register", "/login"];
+
+  if (hiddenRoutes.includes(pathname)) {
     return null;
   }
 
@@ -31,7 +33,7 @@ export function Footer() {
             Excelência em cortes clássicos e modernos, barba terapia e clube de assinaturas com benefícios exclusivos.
           </p>
           <div className="pt-1 flex items-center gap-3 text-zinc-400">
-            {/* Ícone Instagram em SVG nativo */}
+            {/* Ícone Instagram em SVG */}
             <a
               href="https://instagram.com"
               target="_blank"
@@ -93,7 +95,7 @@ export function Footer() {
       <div className="border-t border-zinc-900/80 py-4">
         <div className="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-zinc-600">
           <p>© {currentYear} BarberShop. Todos os direitos reservados.</p>
-          <p className="text-zinc-500">Desenvolvido com Next.js & Neon</p>
+          <p className="text-zinc-500">Desenvolvido por Hildo Pereira Costa</p>
         </div>
       </div>
     </footer>
