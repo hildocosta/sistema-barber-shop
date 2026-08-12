@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  nome      String   @db.VarChar(100)
+  email     String   @unique @db.VarChar(150)
+  telefone  String?  @db.VarChar(20)
+  role      String   @default("CLIENT") @db.VarChar(20) // "CLIENT", "BARBER", "ADMIN"
+  cargo     String?  @db.VarChar(50) // Ex: "Mestre Barbeiro", "Visagista"
+  badge     String?  @db.VarChar(30) // Ex: "Destaque"
+  isVip     Boolean  @default(false)
+  criadoEm  DateTime @default(now()) @map("criado_em")
+
+  // Relacionamentos
+  agendamentosCliente  Appointment[] @relation("ClienteAgendamentos")
+  agendamentosBarbeiro Appointment[] @relation("BarbeiroAgendamentos")
+
+  @@map("users")
+}
+
+model Branch {
+  id        Int      @id @default(autoincrement())
+  nome      String   @db.VarChar(100) // "Unidade Central - Boneca do Iguaçu"
+  endereco  String   @db.VarChar(200) // "Av. Castro Alves, 445"
+  telefone  String?  @db.VarChar(20)
+  ativo     Boolean  @default(true)
+  criadoEm  DateTime @default(now()) @map("criado_em")
+
+  agendamentos Appointment[]
+
+  @@map("branches")
+}
+
+model Service {
+  id             Int      @id @default(autoincrement())
+  nome           String   @db.VarChar(100) // "Corte Tradicional / Fade"
+  preco          Decimal  @db.Decimal(10, 2)
+  precoOriginal  Decimal? @map("preco_original") @db.Decimal(10, 2)
+  duracaoMinutos Int      @default(30) @map("duracao_minutos")
+  ativo          Boolean  @default(true)
+  criadoEm       DateTime @default(now()) @map("criado_em")
+
+  agendamentos AppointmentService[]
+
+  @@map("services")
+}
+
+model Appointment {
+  id         Int      @id @default(autoincrement())
+  dataHora   DateTime @map("data_hora")
+  status     String   @default("CONFIRMADO") @db.VarChar(30) // "CONFIRMADO", "CONCLUIDO", "CANCELADO"
+  valorTotal Decimal  @map("valor_total") @db.Decimal(10, 2)
+  isVipFree  Boolean  @default(false) @map("is_vip_free")
+  observacao String?  @db.Text
+  criadoEm   DateTime @default(now()) @map("criado_em")
+
+  // Chaves estrangeiras
+  clienteId  Int      @map("cliente_id")
+  barbeiroId Int?     @map("barbeiro_id")
+  filialId   Int      @map("filial_id")
+
+  cliente  User    @relation("ClienteAgendamentos", fields: [clienteId], references: [id])
+  barbeiro User?   @relation("BarbeiroAgendamentos", fields: [barbeiroId], references: [id])
+  filial   Branch  @relation(fields: [filialId], references: [id])
+
+  servicos AppointmentService[]
+
+  @@map("appointments")
+}
+
+model AppointmentService {
+  id            Int     @id @default(autoincrement())
+  agendamentoId Int     @map("agendamento_id")
+  servicoId     Int     @map("servico_id")
+  precoAplicado Decimal @map("preco_aplicado") @db.Decimal(10, 2)
+
+  agendamento Appointment @relation(fields: [agendamentoId], references: [id], onDelete: Cascade)
+  servico     Service     @relation(fields: [servicoId], references: [id])
+
+  @@map("appointment_services")
+}
