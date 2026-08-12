@@ -13,8 +13,7 @@ import {
   Check, 
   Clock, 
   Crown,
-  CheckCircle2,
-  Sparkles
+  CheckCircle2
 } from "lucide-react";
 
 // DADOS DO SISTEMA
@@ -124,7 +123,7 @@ export default function NewAppointmentPage() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-6 space-y-6 pb-28 relative">
+    <div className="max-w-lg mx-auto px-4 py-6 space-y-5 relative">
       
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -225,28 +224,26 @@ export default function NewAppointmentPage() {
         </button>
       </div>
 
-      {/* Barra Fixa de Finalização */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-zinc-950/90 backdrop-blur-md border-t border-zinc-800 z-30">
-        <div className="max-w-lg mx-auto flex items-center justify-between gap-4">
-          <div>
-            <span className="text-[10px] uppercase font-bold text-zinc-500 block">Total a pagar</span>
-            <div className="flex items-baseline gap-1">
-              <span className="text-lg font-black text-amber-400">
-                {isVipMember ? "R$ 0,00" : `R$ ${finalTotal.toFixed(2).replace(".", ",")}`}
-              </span>
-              {isVipMember && (
-                <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">VIP</span>
-              )}
-            </div>
+      {/* Resumo e Botão de Ação Embutido no Fluxo */}
+      <div className="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-4 space-y-3 pt-4">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-zinc-400">Total a pagar</span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-lg font-black text-amber-400">
+              {isVipMember ? "R$ 0,00" : `R$ ${finalTotal.toFixed(2).replace(".", ",")}`}
+            </span>
+            {isVipMember && (
+              <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">VIP</span>
+            )}
           </div>
-
-          <button
-            onClick={() => setConfirmed(true)}
-            className="flex-1 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black py-3.5 px-6 rounded-2xl text-sm transition-all shadow-lg shadow-amber-500/20 active:scale-95 text-center"
-          >
-            Confirmar Agendamento
-          </button>
         </div>
+
+        <button
+          onClick={() => setConfirmed(true)}
+          className="w-full bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black py-3.5 px-6 rounded-xl text-sm transition-all shadow-lg shadow-amber-500/10 active:scale-[0.98] text-center"
+        >
+          Confirmar Agendamento
+        </button>
       </div>
 
       {/* MODAL / BOTTOM SHEET RESPONSIVO */}
