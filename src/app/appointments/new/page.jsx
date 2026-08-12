@@ -78,12 +78,13 @@ export default function NewAppointmentPage() {
   const rawTotal = selectedServices.reduce((acc, curr) => acc + curr.price, 0);
   const finalTotal = isVipMember ? 0.0 : rawTotal;
 
-  if (confirmed) {
+ if (confirmed) {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center space-y-6">
         <div className="w-20 h-20 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto animate-bounce">
           <CheckCircle2 className="w-10 h-10" />
         </div>
+        
         <div className="space-y-2">
           <h1 className="text-2xl font-black text-zinc-100">Agendamento Confirmado!</h1>
           <p className="text-sm text-zinc-400">
@@ -91,36 +92,36 @@ export default function NewAppointmentPage() {
           </p>
         </div>
 
-        {/* Card de Resumo com espaçamento ajustado */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-left text-xs space-y-3.5">
-          <div className="flex justify-between items-center gap-4 pb-3 border-b border-zinc-800">
-            <span className="text-zinc-500 shrink-0">Unidade:</span>
-            <span className="font-semibold text-zinc-200 text-right">{selectedBranch.name}</span>
+        {/* Card de Resumo Totalmente Centralizado */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-center text-xs space-y-4">
+          <div className="pb-3 border-b border-zinc-800/80 space-y-1">
+            <span className="text-[11px] uppercase font-bold text-zinc-500 tracking-wider block">Unidade</span>
+            <p className="font-semibold text-zinc-200 text-sm">{selectedBranch.name}</p>
           </div>
 
-          <div className="flex justify-between items-center gap-4 pb-3 border-b border-zinc-800">
-            <span className="text-zinc-500 shrink-0">Barbeiro:</span>
-            <span className="font-semibold text-zinc-200 text-right">{selectedBarber.name}</span>
+          <div className="pb-3 border-b border-zinc-800/80 space-y-1">
+            <span className="text-[11px] uppercase font-bold text-zinc-500 tracking-wider block">Barbeiro</span>
+            <p className="font-semibold text-zinc-200 text-sm">{selectedBarber.name}</p>
           </div>
 
-          <div className="flex justify-between items-start gap-4 pb-3 border-b border-zinc-800">
-            <span className="text-zinc-500 shrink-0">Serviços:</span>
-            <span className="font-semibold text-zinc-200 text-right leading-relaxed">
-              {selectedServices.map((s) => s.name).join(", ")}
-            </span>
+          <div className="pb-3 border-b border-zinc-800/80 space-y-1">
+            <span className="text-[11px] uppercase font-bold text-zinc-500 tracking-wider block">Serviços</span>
+            <p className="font-semibold text-zinc-200 text-sm leading-relaxed max-w-xs mx-auto">
+              {selectedServices.map((s) => s.name).join(" • ")}
+            </p>
           </div>
 
-          <div className="flex justify-between items-center gap-4 pt-1">
-            <span className="text-zinc-500 shrink-0">Valor Total:</span>
-            <span className="font-bold text-emerald-400 text-sm text-right">
+          <div className="pt-1 space-y-1">
+            <span className="text-[11px] uppercase font-bold text-zinc-500 tracking-wider block">Valor Total</span>
+            <p className="font-black text-emerald-400 text-base">
               {isVipMember ? "R$ 0,00 (Plano VIP)" : `R$ ${finalTotal.toFixed(2).replace(".", ",")}`}
-            </span>
+            </p>
           </div>
         </div>
 
         <Link
           href="/"
-          className="w-full bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold py-3.5 rounded-xl block text-sm transition-all shadow-lg shadow-amber-500/20"
+          className="w-full bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold py-3.5 rounded-xl block text-sm transition-all shadow-lg shadow-amber-500/20 text-center"
         >
           Voltar ao Início
         </Link>
