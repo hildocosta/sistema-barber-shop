@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, User, Mail, Phone, Lock, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, User, Mail, Phone, Lock, Eye, EyeOff, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -12,10 +12,11 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // Formatação automática do celular/WhatsApp: (XX) XXXXX-XXXX
+  // Formatação automática do WhatsApp: (XX) XXXXX-XXXX
   const handlePhoneChange = (e) => {
     let val = e.target.value.replace(/\D/g, "");
     if (val.length > 11) val = val.slice(0, 11);
@@ -26,9 +27,10 @@ export default function RegisterPage() {
       val = `(${val.slice(0, 2)}) ${val.slice(2)}`;
     }
     setPhone(val);
+    if (error) setError("");
   };
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -54,23 +56,39 @@ export default function RegisterPage() {
       return;
     }
 
-    const userData = {
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-      phone: phone.trim(),
-      isVip: false,
-      registeredAt: new Date().toISOString()
-    };
+    setLoading(true);
 
     try {
-      localStorage.setItem("barber_user", JSON.stringify(userData));
+      // 1. Envia os dados para a API do Prisma
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome: name.trim(),
+          email: email.trim().toLowerCase(),
+          telefone: cleanPhone,
+          senha: password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Erro ao salvar cliente no banco de dados.");
+      }
+
+      // 2. Salva no localStorage os dados oficiais retornados pelo banco
+      localStorage.setItem("barber_user", JSON.stringify(data.user));
       window.dispatchEvent(new Event("storage"));
+
       setSuccess(true);
       setTimeout(() => {
         router.push("/appointments/new");
       }, 1200);
-    } catch {
-      setError("Erro ao salvar seus dados no dispositivo.");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -88,7 +106,6 @@ export default function RegisterPage() {
 
   return (
     <div className="max-w-md mx-auto px-4 py-6 space-y-6">
-      {/* Topo / Voltar */}
       <div className="flex items-center gap-3">
         <Link 
           href="/" 
@@ -102,15 +119,14 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      {/* Formulário */}
       <form onSubmit={handleRegister} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-xl">
-            {error}
+          <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-xl flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
-        {/* Nome */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-zinc-400 flex items-center gap-1.5">
             <User className="w-3.5 h-3.5 text-amber-400" /> Nome Completo
@@ -120,12 +136,14 @@ export default function RegisterPage() {
             required
             placeholder="Ex: Carlos Eduardo"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => {
+              setName(e.target.value);
+              if (error) setError("");
+            }}
             className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500 transition-colors"
           />
         </div>
 
-        {/* E-mail */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-zinc-400 flex items-center gap-1.5">
             <Mail className="w-3.5 h-3.5 text-amber-400" /> E-mail
@@ -135,12 +153,14 @@ export default function RegisterPage() {
             required
             placeholder="seuemail@exemplo.com"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (error) setError("");
+            }}
             className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500 transition-colors"
           />
         </div>
 
-        {/* WhatsApp */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-zinc-400 flex items-center gap-1.5">
             <Phone className="w-3.5 h-3.5 text-amber-400" /> WhatsApp
@@ -155,7 +175,6 @@ export default function RegisterPage() {
           />
         </div>
 
-        {/* Senha com visualizador */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-zinc-400 flex items-center gap-1.5">
             <Lock className="w-3.5 h-3.5 text-amber-400" /> Senha
@@ -166,7 +185,10 @@ export default function RegisterPage() {
               required
               placeholder="Mínimo 6 caracteres"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (error) setError("");
+              }}
               className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-4 pr-11 py-3 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500 transition-colors"
             />
             <button
@@ -179,15 +201,21 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        {/* Botão de Envio */}
         <button
           type="submit"
-          className="w-full bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold py-3.5 rounded-xl text-sm transition-all shadow-lg shadow-amber-500/10 active:scale-[0.98]"
+          disabled={loading}
+          className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-zinc-950 font-bold py-3.5 rounded-xl text-sm transition-all shadow-lg shadow-amber-500/10 active:scale-[0.98] flex items-center justify-center gap-2"
         >
-          Criar Minha Conta
+          {loading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Salvando no banco...</span>
+            </>
+          ) : (
+            "Criar Minha Conta"
+          )}
         </button>
 
-        {/* Link para Login */}
         <p className="text-center text-xs text-zinc-500 pt-1">
           Já possui conta?{" "}
           <Link href="/login" className="text-amber-400 hover:underline font-medium">

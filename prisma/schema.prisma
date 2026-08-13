@@ -4,30 +4,78 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  nome      String   @db.VarChar(100)
-  email     String   @unique @db.VarChar(150)
-  telefone  String?  @db.VarChar(20)
-  role      String   @default("CLIENT") @db.VarChar(20) // "CLIENT", "BARBER", "ADMIN"
-  cargo     String?  @db.VarChar(50) // Ex: "Mestre Barbeiro", "Visagista"
-  badge     String?  @db.VarChar(30) // Ex: "Destaque"
-  isVip     Boolean  @default(false)
-  criadoEm  DateTime @default(now()) @map("criado_em")
+  id            Int       @id @default(autoincrement())
+  nome          String?   @db.VarChar(100)
+  name          String?   @db.VarChar(100) // Compatibilidade OAuth
+  email         String    @unique @db.VarChar(150)
+  emailVerified DateTime? @map("email_verified")
+  image         String?   @db.Text
+  senha         String?   @db.VarChar(255) // Opcional para logins sociais
+  telefone      String?   @db.VarChar(20)
+  role          String    @default("CLIENT") @db.VarChar(20) // "CLIENT", "BARBER", "ADMIN"
+  cargo         String?   @db.VarChar(50) // Ex: "Mestre Barbeiro", "Visagista"
+  badge         String?   @db.VarChar(30) // Ex: "Destaque"
+  isVip         Boolean   @default(false)
+  criadoEm      DateTime  @default(now()) @map("criado_em")
 
-  // Relacionamentos
+  // NextAuth
+  accounts Account[]
+  sessions Session[]
+
+  // Relacionamentos da Barbearia
   agendamentosCliente  Appointment[] @relation("ClienteAgendamentos")
   agendamentosBarbeiro Appointment[] @relation("BarbeiroAgendamentos")
 
   @@map("users")
 }
 
+model Account {
+  id                Int     @id @default(autoincrement())
+  userId            Int     @map("user_id")
+  type              String  @db.VarChar(50)
+  provider          String  @db.VarChar(50)
+  providerAccountId String  @map("provider_account_id") @db.VarChar(255)
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String? @db.VarChar(50)
+  scope             String? @db.VarChar(255)
+  id_token          String? @db.Text
+  session_state     String? @db.VarChar(255)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           Int      @id @default(autoincrement())
+  sessionToken String   @unique @map("session_token") @db.VarChar(255)
+  userId       Int      @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String   @db.VarChar(255)
+  token      String   @unique @db.VarChar(255)
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
 model Branch {
   id        Int      @id @default(autoincrement())
-  nome      String   @db.VarChar(100) // "Unidade Central - Boneca do Iguaçu"
-  endereco  String   @db.VarChar(200) // "Av. Castro Alves, 445"
+  nome      String   @db.VarChar(100)
+  endereco  String   @db.VarChar(200)
   telefone  String?  @db.VarChar(20)
   ativo     Boolean  @default(true)
   criadoEm  DateTime @default(now()) @map("criado_em")
@@ -39,7 +87,7 @@ model Branch {
 
 model Service {
   id             Int      @id @default(autoincrement())
-  nome           String   @db.VarChar(100) // "Corte Tradicional / Fade"
+  nome           String   @db.VarChar(100)
   preco          Decimal  @db.Decimal(10, 2)
   precoOriginal  Decimal? @map("preco_original") @db.Decimal(10, 2)
   duracaoMinutos Int      @default(30) @map("duracao_minutos")
@@ -54,20 +102,19 @@ model Service {
 model Appointment {
   id         Int      @id @default(autoincrement())
   dataHora   DateTime @map("data_hora")
-  status     String   @default("CONFIRMADO") @db.VarChar(30) // "CONFIRMADO", "CONCLUIDO", "CANCELADO"
+  status     String   @default("CONFIRMADO") @db.VarChar(30)
   valorTotal Decimal  @map("valor_total") @db.Decimal(10, 2)
   isVipFree  Boolean  @default(false) @map("is_vip_free")
   observacao String?  @db.Text
   criadoEm   DateTime @default(now()) @map("criado_em")
 
-  // Chaves estrangeiras
   clienteId  Int      @map("cliente_id")
   barbeiroId Int?     @map("barbeiro_id")
   filialId   Int      @map("filial_id")
 
-  cliente  User    @relation("ClienteAgendamentos", fields: [clienteId], references: [id])
-  barbeiro User?   @relation("BarbeiroAgendamentos", fields: [barbeiroId], references: [id])
-  filial   Branch  @relation(fields: [filialId], references: [id])
+  cliente  User   @relation("ClienteAgendamentos", fields: [clienteId], references: [id])
+  barbeiro User?  @relation("BarbeiroAgendamentos", fields: [barbeiroId], references: [id])
+  filial   Branch @relation(fields: [filialId], references: [id])
 
   servicos AppointmentService[]
 

@@ -2,9 +2,10 @@
 
 import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
+import { useSession, signOut } from "next-auth/react";
 import { Scissors, Calendar, Crown, Menu, X, UserPlus, LogIn, LogOut } from "lucide-react";
 
-// Funções puras para ler e subscrever ao localStorage
+// Funções para ler e subscrever ao localStorage (login tradicional)
 function subscribe(callback) {
   window.addEventListener("storage", callback);
   return () => window.removeEventListener("storage", callback);
@@ -21,22 +22,40 @@ function getServerSnapshot() {
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Lê o estado de forma segura e sincronizada sem useEffect/setState
-  const rawUser = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  // Sessão do Google (NextAuth)
+  const { data: session } = useSession();
 
-  let currentUser = null;
+  // Sessão manual via localStorage
+  const rawUser = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  let localUser = null;
   if (rawUser) {
     try {
-      currentUser = JSON.parse(rawUser);
+      localUser = JSON.parse(rawUser);
     } catch {
-      currentUser = null;
+      localUser = null;
     }
   }
 
-  const handleLogout = () => {
+  // Unifica os dados do usuário (prioriza o NextAuth/Google)
+  const currentUser = session?.user
+    ? {
+        name: session.user.name || session.user.email?.split("@")[0],
+        email: session.user.email,
+        image: session.user.image,
+        phone: session.user.phone || session.user.telefone || null,
+        isVip: session.user.isVip || false,
+      }
+    : localUser;
+
+  const handleLogout = async () => {
     localStorage.removeItem("barber_user");
     window.dispatchEvent(new Event("storage"));
     setIsOpen(false);
+    
+    // Se estiver logado via NextAuth/Google, executa o logout do NextAuth
+    if (session) {
+      await signOut({ callbackUrl: "/" });
+    }
   };
 
   return (
@@ -73,9 +92,17 @@ export function Header() {
           {currentUser ? (
             <div className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-xl text-sm">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs font-bold">
-                  {currentUser.name?.charAt(0).toUpperCase()}
-                </div>
+                {currentUser.image ? (
+                  <img
+                    src={currentUser.image}
+                    alt={currentUser.name}
+                    className="w-7 h-7 rounded-full object-cover border border-amber-500/40"
+                  />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs font-bold">
+                    {currentUser.name?.charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <span className="font-semibold text-zinc-200">{currentUser.name}</span>
                 {currentUser.isVip && (
                   <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">VIP</span>
@@ -126,12 +153,20 @@ export function Header() {
           {currentUser && (
             <div className="pb-3 border-b border-zinc-900 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs font-bold">
-                  {currentUser.name?.charAt(0).toUpperCase()}
-                </div>
+                {currentUser.image ? (
+                  <img
+                    src={currentUser.image}
+                    alt={currentUser.name}
+                    className="w-8 h-8 rounded-full object-cover border border-amber-500/40"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs font-bold">
+                    {currentUser.name?.charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <div>
                   <p className="text-sm font-bold text-zinc-200">{currentUser.name}</p>
-                  <p className="text-xs text-zinc-500">{currentUser.phone}</p>
+                  <p className="text-xs text-zinc-500">{currentUser.phone || currentUser.email}</p>
                 </div>
               </div>
               {currentUser.isVip && (
