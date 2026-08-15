@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, 
   Store, 
@@ -13,7 +14,8 @@ import {
   Check, 
   Clock, 
   Crown,
-  CheckCircle2
+  CheckCircle2,
+  Loader2
 } from "lucide-react";
 
 // DADOS DO SISTEMA
@@ -30,22 +32,22 @@ const BARBERS = [
 ];
 
 const SERVICES = [
-  { id: "corte", name: "Corte Tradicional / Fade", price: 35.0, originalPrice: 40.0, duration: "30 min" },
-  { id: "barba", name: "Barba Terapia Completa", price: 30.0, originalPrice: 35.0, duration: "30 min" },
-  { id: "combo", name: "Combo Cabelo + Barba", price: 60.0, originalPrice: 75.0, duration: "60 min" },
-  { id: "sobrancelha", name: "Sobrancelha na Navalha", price: 12.0, originalPrice: 15.0, duration: "15 min" },
-  { id: "pezinho", name: "Acabamento & Pezinho", price: 15.0, originalPrice: 18.0, duration: "15 min" },
-  { id: "limpeza", name: "Limpeza de Pele Black Mask", price: 45.0, originalPrice: 50.0, duration: "30 min" },
+  { id: "1", name: "Corte Tradicional / Fade", price: 35.0, originalPrice: 40.0, duration: "30 min" },
+  { id: "2", name: "Barba Terapia Completa", price: 30.0, originalPrice: 35.0, duration: "30 min" },
+  { id: "3", name: "Combo Cabelo + Barba", price: 60.0, originalPrice: 75.0, duration: "60 min" },
+  { id: "4", name: "Sobrancelha na Navalha", price: 12.0, originalPrice: 15.0, duration: "15 min" },
+  { id: "5", name: "Acabamento & Pezinho", price: 15.0, originalPrice: 18.0, duration: "15 min" },
+  { id: "6", name: "Limpeza de Pele Black Mask", price: 45.0, originalPrice: 50.0, duration: "30 min" },
 ];
 
 const DAYS_OF_WEEK = [
-  { dayName: "Hoje", dayNum: "12", dateString: "12 de Agosto", fullDate: "2026-08-12", available: true },
-  { dayName: "Qui", dayNum: "13", dateString: "13 de Agosto", fullDate: "2026-08-13", available: true },
-  { dayName: "Sex", dayNum: "14", dateString: "14 de Agosto", fullDate: "2026-08-14", available: true },
-  { dayName: "Sáb", dayNum: "15", dateString: "15 de Agosto", fullDate: "2026-08-15", available: true },
+  { dayName: "Hoje", dayNum: "15", dateString: "15 de Agosto", fullDate: "2026-08-15", available: true },
   { dayName: "Dom", dayNum: "16", dateString: "16 de Agosto", fullDate: "2026-08-16", available: false },
   { dayName: "Seg", dayNum: "17", dateString: "17 de Agosto", fullDate: "2026-08-17", available: true },
   { dayName: "Ter", dayNum: "18", dateString: "18 de Agosto", fullDate: "2026-08-18", available: true },
+  { dayName: "Qua", dayNum: "19", dateString: "19 de Agosto", fullDate: "2026-08-19", available: true },
+  { dayName: "Qui", dayNum: "20", dateString: "20 de Agosto", fullDate: "2026-08-20", available: true },
+  { dayName: "Sex", dayNum: "21", dateString: "21 de Agosto", fullDate: "2026-08-21", available: true },
 ];
 
 const TIME_SLOTS = [
@@ -55,6 +57,8 @@ const TIME_SLOTS = [
 ];
 
 export default function NewAppointmentPage() {
+  const router = useRouter();
+
   const [selectedBranch, setSelectedBranch] = useState(BRANCHES[0]);
   const [selectedBarber, setSelectedBarber] = useState(BARBERS[0]);
   const [selectedServices, setSelectedServices] = useState([SERVICES[0]]);
@@ -64,6 +68,8 @@ export default function NewAppointmentPage() {
   const [activeSheet, setActiveSheet] = useState(null);
   const [confirmed, setConfirmed] = useState(false);
   const [isVipMember, setIsVipMember] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleToggleService = (service) => {
     if (selectedServices.find((s) => s.id === service.id)) {
@@ -78,7 +84,49 @@ export default function NewAppointmentPage() {
   const rawTotal = selectedServices.reduce((acc, curr) => acc + curr.price, 0);
   const finalTotal = isVipMember ? 0.0 : rawTotal;
 
- if (confirmed) {
+  // FUNÇÃO DE INTEGRAÇÃO COM A API
+  const handleConfirmAppointment = async () => {
+    setIsLoading(true);
+    setErrorMessage("");
+
+    try {
+      // Monta a String ISO completa para o campo DateTime do Prisma
+      const isoDateTime = `${selectedDay.fullDate}T${selectedTime}:00.000Z`;
+
+      const payload = {
+        filialId: selectedBranch.id,
+        barbeiroId: selectedBarber.id === "any" ? null : selectedBarber.id,
+        servicosIds: selectedServices.map((s) => s.id),
+        dataHora: isoDateTime,
+        observacao: isVipMember ? "Agendamento VIP" : "",
+      };
+
+      const response = await fetch("/api/agendamentos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          // Se não estiver logado, redireciona para a página de login
+          router.push("/login");
+          return;
+        }
+        throw new Error(data.error || "Ocorreu um erro ao agendar.");
+      }
+
+      setConfirmed(true);
+    } catch (err) {
+      setErrorMessage(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (confirmed) {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center space-y-6">
         <div className="w-20 h-20 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto animate-bounce">
@@ -92,7 +140,6 @@ export default function NewAppointmentPage() {
           </p>
         </div>
 
-        {/* Card de Resumo Totalmente Centralizado */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-center text-xs space-y-4">
           <div className="pb-3 border-b border-zinc-800/80 space-y-1">
             <span className="text-[11px] uppercase font-bold text-zinc-500 tracking-wider block">Unidade</span>
@@ -149,6 +196,13 @@ export default function NewAppointmentPage() {
       </div>
 
       <p className="text-xs text-zinc-400 text-center">Toque em cada campo para personalizar sua reserva</p>
+
+      {/* Exibição de Erro se houver */}
+      {errorMessage && (
+        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs text-center font-medium">
+          {errorMessage}
+        </div>
+      )}
 
       {/* Cards de Seleção */}
       <div className="space-y-3">
@@ -231,7 +285,7 @@ export default function NewAppointmentPage() {
         </button>
       </div>
 
-      {/* Resumo e Botão de Ação Embutido no Fluxo */}
+      {/* Resumo e Botão de Ação */}
       <div className="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-4 space-y-3 pt-4">
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold text-zinc-400">Total a pagar</span>
@@ -246,14 +300,22 @@ export default function NewAppointmentPage() {
         </div>
 
         <button
-          onClick={() => setConfirmed(true)}
-          className="w-full bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black py-3.5 px-6 rounded-xl text-sm transition-all shadow-lg shadow-amber-500/10 active:scale-[0.98] text-center"
+          onClick={handleConfirmAppointment}
+          disabled={isLoading}
+          className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-zinc-950 font-black py-3.5 px-6 rounded-xl text-sm transition-all shadow-lg shadow-amber-500/10 active:scale-[0.98] text-center flex items-center justify-center gap-2"
         >
-          Confirmar Agendamento
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Processando...
+            </>
+          ) : (
+            "Confirmar Agendamento"
+          )}
         </button>
       </div>
 
-      {/* MODAL / BOTTOM SHEET RESPONSIVO */}
+      {/* MODAIS / BOTTOM SHEETS (Mantidos do seu código original) */}
       {activeSheet && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col justify-end sm:justify-center sm:items-center sm:p-4 transition-opacity">
           
