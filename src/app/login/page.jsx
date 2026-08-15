@@ -60,8 +60,9 @@ export default function LoginPage() {
 
       setSuccess(true);
 
+      // Redireciona para a Página Inicial ("/")
       setTimeout(() => {
-        router.push("/appointments/new");
+        router.push("/");
       }, 1000);
     } catch (err) {
       setError(err.message);
@@ -74,7 +75,8 @@ export default function LoginPage() {
     try {
       setGoogleLoading(true);
       setError("");
-      await signIn("google", { callbackUrl: "/appointments/new" });
+      // Redireciona para a Página Inicial ("/")
+      await signIn("google", { callbackUrl: "/" });
     } catch {
       setError("Erro ao conectar com a conta Google.");
       setGoogleLoading(false);
@@ -88,7 +90,7 @@ export default function LoginPage() {
           <CheckCircle2 className="w-8 h-8" />
         </div>
         <h2 className="text-xl font-bold text-zinc-100">Login realizado!</h2>
-        <p className="text-xs text-zinc-400">Acessando seus agendamentos...</p>
+        <p className="text-xs text-zinc-400">Redirecionando para o início...</p>
       </div>
     );
   }
