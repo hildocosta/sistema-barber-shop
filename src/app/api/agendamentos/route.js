@@ -1,76 +1,130 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
 
-// Sem o ": NextRequest" aqui:
-export async function POST(request) {
+// ==========================================
+// 1. GET: Buscar dados / Agendamentos
+// ==========================================
+export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
 
-    if (!session || !session.user?.email) {
+    if (!session || !session.user) {
       return NextResponse.json(
-        { error: "Você precisa estar logado para agendar." },
+        { error: "Não autorizado. Faça login para continuar." },
         { status: 401 }
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+    const clienteId = parseInt(session.user.id, 10);
+
+    // Busca todos os agendamentos do usuário logado
+    const agendamentos = await prisma.appointment.findMany({
+      where: { clienteId },
+      include: {
+        filial: true,
+        barbeiro: true,
+        servicos: {
+          include: {
+            servico: true,
+          },
+        },
+      },
+      orderBy: {
+        dataHora: "desc",
+      },
     });
 
-    if (!user) {
+    return NextResponse.json(agendamentos, { status: 200 });
+  } catch (error) {
+    console.error("ERRO_AO_BUSCAR_AGENDAMENTOS:", error);
+    return NextResponse.json(
+      { error: "Erro interno ao buscar agendamentos." },
+      { status: 500 }
+    );
+  }
+}
+
+// ==========================================
+// 2. POST: Criar um Novo Agendamento
+// ==========================================
+export async function POST(request) {
+  try {
+    const session = await getSession();
+
+    if (!session || !session.user) {
       return NextResponse.json(
-        { error: "Usuário não encontrado." },
-        { status: 404 }
+        { error: "Não autorizado. Faça login para continuar." },
+        { status: 401 }
       );
     }
 
-    const { filialId, barbeiroId, servicosIds, dataHora, observacao } = await request.json();
+    const body = await request.json();
+    const { dataHora, valorTotal, filialId, barbeiroId, observacao, servicos } = body;
 
-    if (!filialId || !servicosIds || servicosIds.length === 0 || !dataHora) {
+    // Validação do Valor Total
+    const parsedValorTotal = parseFloat(valorTotal);
+    const finalValorTotal = isNaN(parsedValorTotal) ? 0 : parsedValorTotal;
+
+    // Conversões de IDs
+    const parsedClienteId = parseInt(session.user.id, 10);
+    const parsedFilialId = parseInt(filialId, 10);
+
+    const rawBarbeiroId = parseInt(barbeiroId, 10);
+    const parsedBarbeiroId =
+      !isNaN(rawBarbeiroId) && rawBarbeiroId > 0 ? rawBarbeiroId : null;
+
+    if (isNaN(parsedFilialId)) {
       return NextResponse.json(
-        { error: "Dados incompletos para realizar o agendamento." },
+        { error: "Selecione uma filial válida." },
         { status: 400 }
       );
     }
 
-    const servicosDB = await prisma.service.findMany({
-      where: { id: { in: servicosIds } },
-    });
+    if (!dataHora) {
+      return NextResponse.json(
+        { error: "Data e horário inválidos." },
+        { status: 400 }
+      );
+    }
 
-    const valorTotal = servicosDB.reduce(
-      (acc, s) => acc + Number(s.preco),
-      0
-    );
-
-    const novoAgendamento = await prisma.appointment.create({
+    // Criação do agendamento com gravação da tabela pivô (AppointmentService)
+    const agendamento = await prisma.appointment.create({
       data: {
-        clienteId: user.id,
-        filialId: Number(filialId),
-        barbeiroId: barbeiroId ? Number(barbeiroId) : null,
+        clienteId: parsedClienteId,
+        filialId: parsedFilialId,
+        barbeiroId: parsedBarbeiroId,
         dataHora: new Date(dataHora),
-        valorTotal: valorTotal,
+        valorTotal: finalValorTotal,
         observacao: observacao || null,
-        servicos: {
-          create: servicosDB.map((s) => ({
-            servicoId: s.id,
-            precoAplicado: s.preco,
-          })),
-        },
+        status: "CONFIRMADO",
+
+        servicos:
+          Array.isArray(servicos) && servicos.length > 0
+            ? {
+                create: servicos.map((item) => ({
+                  servicoId: parseInt(item.id, 10),
+                  precoAplicado: parseFloat(item.preco) || 0,
+                })),
+              }
+            : undefined,
       },
       include: {
         servicos: {
-          include: { servico: true },
+          include: {
+            servico: true,
+          },
         },
+        filial: true,
+        barbeiro: true,
       },
     });
 
-    return NextResponse.json(novoAgendamento, { status: 201 });
+    return NextResponse.json(agendamento, { status: 201 });
   } catch (error) {
-    console.error("Erro ao criar agendamento:", error);
+    console.error("ERRO_AO_AGENDAR:", error);
     return NextResponse.json(
-      { error: "Erro interno do servidor ao processar agendamento." },
+      { error: "Erro interno ao criar o agendamento." },
       { status: 500 }
     );
   }

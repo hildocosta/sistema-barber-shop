@@ -3,7 +3,18 @@
 import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { Scissors, Calendar, Crown, Menu, X, UserPlus, LogIn, LogOut } from "lucide-react";
+import { 
+  Scissors, 
+  Calendar, 
+  Crown, 
+  Menu, 
+  X, 
+  UserPlus, 
+  LogIn, 
+  LogOut, 
+  Store, 
+  UserCheck 
+} from "lucide-react";
 
 // Funções para ler e subscrever ao localStorage (login tradicional)
 function subscribe(callback) {
@@ -85,6 +96,26 @@ export function Header() {
           <Link href="/plans" className="flex items-center gap-1.5 text-amber-500 hover:text-amber-400 transition-colors">
             <Crown className="w-4 h-4" /> Clube VIP
           </Link>
+
+          {/* Links Administrativos (Filial e Barbeiro) */}
+          <div className="flex items-center gap-4 pl-4 border-l border-zinc-800">
+            <Link 
+              href="/admin/filiais/nova" 
+              className="flex items-center gap-1.5 text-zinc-400 hover:text-amber-500 transition-colors"
+              title="Cadastrar Nova Filial"
+            >
+              <Store className="w-4 h-4 text-amber-500/70" />
+              <span>Filial</span>
+            </Link>
+            <Link 
+              href="/admin/barbeiros/novo" 
+              className="flex items-center gap-1.5 text-zinc-400 hover:text-amber-500 transition-colors"
+              title="Cadastrar Novo Barbeiro"
+            >
+              <UserCheck className="w-4 h-4 text-amber-500/70" />
+              <span>Barbeiro</span>
+            </Link>
+          </div>
         </nav>
 
         {/* Desktop Auth / Perfil */}
@@ -206,6 +237,27 @@ export function Header() {
           >
             <Crown className="w-4 h-4" /> Clube VIP & Planos
           </Link>
+
+          {/* Seção Administrativa no Menu Mobile */}
+          <div className="pt-3 border-t border-zinc-900 space-y-2">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1">
+              Painel Admin
+            </p>
+            <Link 
+              href="/admin/filiais/nova" 
+              onClick={() => setIsOpen(false)} 
+              className="flex items-center gap-3 text-zinc-300 hover:text-amber-400 py-1.5 text-sm font-medium"
+            >
+              <Store className="w-4 h-4 text-amber-500" /> Cadastrar Filial
+            </Link>
+            <Link 
+              href="/admin/barbeiros/novo" 
+              onClick={() => setIsOpen(false)} 
+              className="flex items-center gap-3 text-zinc-300 hover:text-amber-400 py-1.5 text-sm font-medium"
+            >
+              <UserCheck className="w-4 h-4 text-amber-500" /> Cadastrar Barbeiro
+            </Link>
+          </div>
 
           {/* Botões de Acesso (Login / Cadastro / Sair) */}
           <div className="pt-3 border-t border-zinc-900 space-y-2">

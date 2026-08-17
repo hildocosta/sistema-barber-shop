@@ -40,29 +40,23 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: emailTrim,
-          senha: password,
-        }),
+      // 🟢 USANDO O NEXTAUTH PARA CRIAR A SESSÃO OFICIAL (COOKIE JWT)
+      const res = await signIn("credentials", {
+        email: emailTrim,
+        password: password,
+        redirect: false,
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Erro ao realizar login.");
+      if (res?.error) {
+        throw new Error(res.error || "E-mail ou senha incorretos.");
       }
-
-      localStorage.setItem("barber_user", JSON.stringify(data.user));
-      window.dispatchEvent(new Event("storage"));
 
       setSuccess(true);
 
-      // Redireciona para a Página Inicial ("/")
+      // Redireciona para a Página Inicial e atualiza o estado da sessão
       setTimeout(() => {
         router.push("/");
+        router.refresh();
       }, 1000);
     } catch (err) {
       setError(err.message);
@@ -75,7 +69,6 @@ export default function LoginPage() {
     try {
       setGoogleLoading(true);
       setError("");
-      // Redireciona para a Página Inicial ("/")
       await signIn("google", { callbackUrl: "/" });
     } catch {
       setError("Erro ao conectar com a conta Google.");
@@ -163,7 +156,6 @@ export default function LoginPage() {
 
         {/* Formulário Tradicional */}
         <form onSubmit={handleLogin} className="space-y-4">
-          {/* E-mail */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-zinc-400 flex items-center gap-1.5">
               <Mail className="w-3.5 h-3.5 text-amber-400" /> E-mail
@@ -181,7 +173,6 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Senha */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-zinc-400 flex items-center gap-1.5">
@@ -210,7 +201,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Botão de Entrar */}
           <button
             type="submit"
             disabled={loading || googleLoading}
@@ -229,7 +219,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Link para Cadastro */}
         <p className="text-center text-xs text-zinc-500 pt-1">
           Ainda não tem conta?{" "}
           <Link href="/register" className="text-amber-400 hover:underline font-medium">
